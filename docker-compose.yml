@@ -1,0 +1,56 @@
+services:
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # service qui telecharge le modele une seule fois puis s'arrete
+  ollama-pull:
+    image: ollama/ollama:latest
+    depends_on:
+      ollama:
+        condition: service_healthy
+    entrypoint: ["ollama", "pull", "qwen2.5:0.5b"]
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    ports:
+      - "8000:8000"
+    environment:
+      - OLLAMA_URL=http://ollama:11434
+      - CHROMA_DB_PATH=/data/chroma_db
+      - STORAGE_DIR=/data/storage
+    volumes:
+      - chroma_data:/data/chroma_db
+      - storage_data:/data/storage
+    depends_on:
+      ollama-pull:
+        condition: service_completed_successfully
+
+  streamlit:
+    build:
+      context: .
+      dockerfile: Dockerfile.streamlit
+    ports:
+      - "8501:8501"
+    environment:
+      - BACKEND_URL=http://backend:8000
+    depends_on:
+      - backend
+
+volumes:
+  ollama_data:
+  chroma_data:
+  storage_data:
