@@ -3,8 +3,8 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # on copie d'abord les requirements pour profiter du cache docker
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY requirements.backend.txt .
+RUN pip install --no-cache-dir -r requirements.backend.txt
 
 COPY backend/ backend/
 COPY data/ data/

@@ -14,11 +14,12 @@ if "current_filename" not in st.session_state:
     st.session_state.current_filename = None
 
 
+@st.cache_data(ttl=10)
 def backend_up():
     try:
         r = requests.get(f"{BACKEND_URL}/health", timeout=3)
         return r.status_code == 200
-    except requests.exceptions.ConnectionError:
+    except Exception:
         return False
 
 
